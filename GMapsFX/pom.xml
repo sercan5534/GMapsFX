@@ -34,11 +34,12 @@
     </developers>
     <distributionManagement>
         <repository>
-            <id>bintray-rterp-maven</id>
-            <name>rterp-maven</name>
-            <url>https://api.bintray.com/maven/rterp/maven/GMapsFX/;publish=1</url>
+            <id>internal.repo</id>
+            <name>Temporary Staging Repository</name>
+            <url>file://${project.build.directory}/mvn-repo</url>
         </repository>
     </distributionManagement>
+
     <!--mvn release:clean release:prepare release:perform -->
     <scm>
         <connection>scm:git:git@github.com:rterp/GMapsFX.git</connection>
@@ -52,6 +53,7 @@
         <mainClass>com.lynden.gmapsfx.MainApp</mainClass>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <github.global.server>github</github.global.server>
     </properties>
     <profiles>
         <profile>
@@ -85,7 +87,13 @@
     </profiles>
     <build>
         <plugins>
-
+                <plugin>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>2.8.1</version>
+                    <configuration>
+                        <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>
+                    </configuration>
+                </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -168,14 +176,32 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>0.11</version>
+                <configuration>
+                    <message>Maven artifacts for ${project.version}</message>  <!-- git commit message -->
+                    <noJekyll>true</noJekyll>                                  <!-- disable webpage processing -->
+                    <outputDirectory>${project.build.directory}/maven-repo</outputDirectory> <!-- matches distribution management repository url above -->
+                    <branch>refs/heads/maven-repo</branch>                       <!-- remote branch name -->
+                    <includes><include>**/*</include></includes>
+                    <repositoryName>GMapsFX</repositoryName>      <!-- github repo name -->
+                    <repositoryOwner>sercan5534</repositoryOwner>    <!-- github username  -->
+                </configuration>
+                <executions>
+                    <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
     <dependencies>
-        <dependency>
-            <groupId>com.github.github</groupId>
-            <artifactId>site-maven-plugin</artifactId>
-            <version>0.12</version>
-        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
